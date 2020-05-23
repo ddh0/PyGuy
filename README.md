@@ -1,5 +1,5 @@
 # PyGuy
-A boundary-breaking PC platformer, written in Python 3 using pygame.
+A boundary-breaking PC platformer, written in Python 3.8 and still very early in development.
 
 # What is PyGuy?
 PyGuy is a PC platformer developed solely by me (Dylan Halladay), and it's designed to challenge your ability to think out of the box. Each level includes a puzzle that you must solve in order to gain new abilities and progress in the story.
