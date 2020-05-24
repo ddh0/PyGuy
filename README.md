@@ -10,4 +10,4 @@ Download PyGuy.py (the filename differs based on the version) as well as the /re
 Have fun! Open an issue if you find something's wrong.
 
 # When will PyGuy be done?
-Whenever I feel PyGuy is complete and clean. I'm not keen on releasing unpoished work stamped with my name.
+Whenever I feel PyGuy is complete and clean. I'm not keen on releasing unpolished work stamped with my name.
