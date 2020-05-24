@@ -61,11 +61,10 @@ class Player(pygame.sprite.Sprite):
         super(Player, self).__init__()
 
         # Scale image, create rect, set starting position, and create mask
-        self.image = pygame.transform.scale(PyGuySurface, (PLAYER_WIDTH, PLAYER_HEIGHT))  # image == surface
+        self.image = pygame.transform.scale(PyGuySurface, (PLAYER_WIDTH, PLAYER_HEIGHT))  # image is a surface
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
 
-        # Health!
         self.health = 100
 
         # Velocity
