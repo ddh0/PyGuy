@@ -1,5 +1,5 @@
 # Current status
-Before I throw myself wholly into this game, I'd like to know more about low-level programming in general, to get a sense of how things work under the hood. So while this page seems static and forgotten, I'll be teaching myself C and maybe some 6502 Assembly.
+Before I throw myself entirely into this game, I'd like to know more about low-level programming in general, to get a sense of how things work under the hood. So while this page seems static and forgotten, I'll be teaching myself C and maybe some 6502 Assembly.
 
 # PyGuy
 A boundary-breaking PC platformer, written in Python 3.8 and still very early in development.
