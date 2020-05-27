@@ -8,7 +8,7 @@ A boundary-breaking PC platformer, written in Python 3.8 and still very early in
 PyGuy is a PC platformer developed solely by me (Dylan Halladay), and it's designed to challenge your ability to think out of the box. Each level includes a puzzle that you must solve in order to gain new abilities and progress in the story.
 
 # How do I play it?
-Download PyGuy.py (the filename differs based on the version) as well as the /resources/ folder. Keep the original folder structure. After you have it all downloaded, just run PyGuy.py. Note that you need to install pygame, if you don't have it already.
+Download PyGuy.py (the filename differs based on the version) as well as the /resources/ folder. Keep the original folder structure. After you have it all downloaded, just run PyGuy.py. Note that you need to install pygame, if you don't have it already. Remember, the code here is incomplete and unpolished, and may not even be playable yet.
 
 Have fun! Open an issue if you find something's wrong.
 
