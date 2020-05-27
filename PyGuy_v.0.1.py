@@ -8,9 +8,14 @@ from pygame.locals import *
 # Print start message to the screen. Likely won't be seen in time without a delay
 print("Starting...\nTo exit the game, press ESCAPE.")
 
+# Screen size constants
+screen_width = 256
+screen_height = 224
+
 # Color constants
-COLORKEY = (int(128), int(128), int(128))
-BACKGROUND_COLOR = (int(255), int(255), int(255))
+COLORKEY = (128, 128, 128)
+BACKGROUND_COLOR = (255, 255, 255)
+BLOCK_COLOR = (0, 0, 0)
 
 # Player constants
 PLAYER_WIDTH = 45
@@ -28,41 +33,43 @@ pygame.display.init()
 pygame.mixer.pre_init(frequency=44100, size=-16, channels=2)  # Reduces sound latency
 pygame.mixer.init()
 
-# Create fullscreen display, fill with color, and set window title text
-ScreenSurface = pygame.display.set_mode((0, 0), flags=pygame.FULLSCREEN)
-ScreenSurface.fill(BACKGROUND_COLOR)
+# Get physical monitor display size, scale screen to fill, set window title text
+hw_display = pygame.display.Info()
+hw_display_size = (hw_display.current_w, hw_display.current_h)
+screen_surface = pygame.display.set_mode((screen_width, screen_height), flags=pygame.FULLSCREEN)
+screen_surface = pygame.transform.scale(screen_surface, hw_display_size)
 pygame.display.set_caption('PyGuy v0.1')
 
-# Create screen size variables, full size and half size
-SW, SH = pygame.display.get_surface().get_size()
-HW = int(SW / 2)
-HH = int(SH / 2)
+screen_surface.fill(BACKGROUND_COLOR)
+half_width = int(screen_width / 2)
+half_height = int(screen_height / 2)
+
+pygame.mouse.set_visible(False)
 
 # Load images
-PyGuySurface = pygame.image.load('resources/PyGuy.gif').convert()
-PyGuyJumpSurface = pygame.image.load('resources/PyGuy_jump.gif').convert()
+pyguy_surface = pygame.image.load('resources/PyGuy.gif').convert()
+pyguy_jump_surface = pygame.image.load('resources/PyGuy_jump.gif').convert()
 
-PyGuySurface.set_colorkey(COLORKEY)
-PyGuyJumpSurface.set_colorkey(COLORKEY)
+pyguy_surface.set_colorkey(COLORKEY)
+pyguy_jump_surface.set_colorkey(COLORKEY)
 
 # Load sounds
-StartSoundObj = pygame.mixer.Sound('resources/start.wav')
+start_sound_obj = pygame.mixer.Sound('resources/start.wav')
 
-# Sprite groups
-AllSpritesGroup = pygame.sprite.Group()    # Contains all sprites
-BlockSpritesGroup = pygame.sprite.Group()  # Contains all blocks
-EnemySpritesGroup = pygame.sprite.Group()  # Contains all enemies
+# Sprite lists (easier to iterate over than groups)
+all_sprites_list = []
+block_sprites_list = []
 
 
 class Player(pygame.sprite.Sprite):
     """ Tip - call keypress methods, then call move() """
 
-    def __init__(self):
-        super(Player, self).__init__()
+    def __init__(self, x_center, y_center):
+        super().__init__()
 
         # Scale image, create rect, set starting position, and create mask
-        self.image = pygame.transform.scale(PyGuySurface, (PLAYER_WIDTH, PLAYER_HEIGHT))  # image is a surface
-        self.rect = self.image.get_rect()
+        self.image = pygame.transform.scale(pyguy_surface, (PLAYER_WIDTH, PLAYER_HEIGHT))
+        self.rect = self.image.get_rect(center=(x_center, y_center))
         self.mask = pygame.mask.from_surface(self.image)
 
         self.health = 100
@@ -71,8 +78,7 @@ class Player(pygame.sprite.Sprite):
         self.vx = 0
         self.vy = 0
 
-        # Groups
-        AllSpritesGroup.add(self)
+        all_sprites_list.append(self)
 
     def up_key(self):
         self.vy = JUMP_POWER
@@ -86,73 +92,100 @@ class Player(pygame.sprite.Sprite):
     def right_key(self):
         self.vx = PLAYER_SPEED
 
+    def action_key(self):
+        pass
+
     def no_keys(self):
         self.vx = 0
         self.vy = 0
 
-    def move(self):
+    def update(self):
         """ Move player according to velocity over x axis, then over y axis.
             If a collision occurs, backtrack until resolved """
-        self.rect.move_ip(self.vx, 0)                                                               # X-collisions
-        while pygame.sprite.spritecollideany(self, BlockSpritesGroup, collided=None) is not None:   # with
-            if self.vx < 0:                                                                         # blocks
-                self.rect.move_ip(1, 0)
-                self.vx -= 1                # Undo last px of movement
-            else:                           # Reduce velocity by 1
-                self.rect.move_ip(-1, 0)
-                self.vx += 1
+        self.rect.move_ip(self.vx, 0)
+        for block in block_sprites_list:
+            if pygame.sprite.collide_mask(self, block) is not None:
+                if self.vx < 0:
+                    self.rect.move_ip(1, 0)
+                    self.vx -= 1                # Undo last px of movement
+                else:                           # Reduce velocity by 1
+                    self.rect.move_ip(-1, 0)
+                    self.vx += 1
 
-        self.rect.move_ip(0, -self.vy)                                                              # Y-collisions
-        while pygame.sprite.spritecollideany(self, BlockSpritesGroup, collided=None) is not None:   # with
-            if self.vy < 0:                                                                         # blocks
-                self.rect.move_ip(0, 1)
-                self.vy -= 1                # Undo last px of movement
-            else:                           # Reduce velocity by 1
-                self.rect.move_ip(0, -1)
-                self.vy += 1
+        self.rect.move_ip(0, -self.vy)
+        for block in all_sprites_list:
+            if pygame.sprite.collide_mask(self, block) is not None:
+                if self.vy < 0:
+                    self.rect.move_ip(0, 1)
+                    self.vy -= 1                # Undo last px of movement
+                else:                           # Reduce velocity by 1
+                    self.rect.move_ip(0, -1)
+                    self.vy += 1
 
 
-# Init player
-PyGuy = Player()
+class Block(pygame.sprite.Sprite):
+
+    def __init__(self, x_center, y_center, width, height):
+        super().__init__()
+        self.image = pygame.Surface((width, height))
+        self.image.fill(BLOCK_COLOR)
+        self.image.convert_alpha(self.image)
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect = pygame.Rect(0, 0, width, height)
+        self.rect.center = (x_center, y_center)
+
+        all_sprites_list.append(self)
+        block_sprites_list.append(self)
+
+
+# Create player
+pyguy = Player(half_width, half_height)
+
+# Create testing block
+testing_block = Block(half_width+100, half_height+100, 20, 20)
 
 # Game loop
 while keep_running:
     # Get which keys are currently pressed
-    KeyState = pygame.key.get_pressed()
+    key_state = pygame.key.get_pressed()
 
     # Keys that control PyGuy
-    if KeyState[K_UP] or KeyState[K_SPACE] or KeyState[K_w]:
-        PyGuy.up_key()
-    if KeyState[K_DOWN] or KeyState[K_s]:
-        PyGuy.down_key()
-    if KeyState[K_LEFT] or KeyState[K_a]:
-        PyGuy.left_key()
-    if KeyState[K_RIGHT] or KeyState[K_d]:
-        PyGuy.right_key()
-    if (not KeyState[K_UP] and
-            not KeyState[K_SPACE] and
-            not KeyState[K_w] and
-            not KeyState[K_DOWN] and
-            not KeyState[K_s] and
-            not KeyState[K_LEFT] and
-            not KeyState[K_a] and
-            not KeyState[K_RIGHT] and
-            not KeyState[K_d]):
+    if key_state[K_UP] or key_state[K_w]:
+        pyguy.up_key()
+    if key_state[K_DOWN] or key_state[K_s]:
+        pyguy.down_key()
+    if key_state[K_LEFT] or key_state[K_a]:
+        pyguy.left_key()
+    if key_state[K_RIGHT] or key_state[K_d]:
+        pyguy.right_key()
+    if key_state[K_SPACE] or key_state[K_f]:
+        pyguy.action_key()
+    if (not key_state[K_UP] and
+            not key_state[K_w] and
+            not key_state[K_DOWN] and
+            not key_state[K_s] and
+            not key_state[K_LEFT] and
+            not key_state[K_a] and
+            not key_state[K_RIGHT] and
+            not key_state[K_d] and
+            not key_state[K_SPACE] and
+            not key_state[K_f]):
         # If no keys are pressed
-        PyGuy.no_keys()
+        pyguy.no_keys()
 
     # ESCAPE key stops the game loop
-    if KeyState[K_ESCAPE]:
+    if key_state[K_ESCAPE]:
         keep_running = False
 
     # Update PyGuy
-    PyGuy.move()
+    pyguy.update()
 
     # Clear the screen
-    ScreenSurface.fill(BACKGROUND_COLOR)
+    screen_surface.fill(BACKGROUND_COLOR)
 
     # Draw sprites onto the screen
-    AllSpritesGroup.draw(ScreenSurface)
+    for sprite in all_sprites_list:
+        screen_surface.blit(sprite.image, sprite.rect)
 
     # Update screen
     pygame.display.flip()
